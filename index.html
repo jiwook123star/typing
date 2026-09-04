@@ -1,87 +1,2109 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>METRO TYPING: CHINA — Shanghai</title>
-<style>
-*{box-sizing:border-box}body{margin:0;background:#f4f5f7;color:#17191c;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans KR","Noto Sans SC",Arial,sans-serif}
-.app{max-width:1200px;margin:auto;padding:18px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px}.logo{font-weight:950;font-size:24px}.sub{font-size:11px;color:#777;letter-spacing:1px}
-.card{background:#fff;border:1px solid #e2e4e8;border-radius:18px;padding:16px;margin-top:12px}.controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-select,button,input{font:inherit}.select{border:1px solid #d9dce1;border-radius:10px;padding:9px 11px;background:#fff}.btn{border:1px solid #ddd;background:#fff;border-radius:9px;padding:8px 11px;cursor:pointer}.btn.active,.start{background:#222;color:#fff;border-color:#222}
-.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:12px}.stat{background:#fff;border:1px solid #e2e4e8;border-radius:13px;padding:10px 12px}.lab{font-size:11px;color:#777}.val{font-size:21px;font-weight:900}
-.layout{display:grid;grid-template-columns:1.35fr .65fr;gap:12px}.map{height:610px;background:#fafafa;border-radius:12px;overflow:hidden;position:relative}.map svg{width:100%;height:100%}
-.route{fill:none;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}.dot{stroke:#fff;stroke-width:2}.current{stroke:#111;stroke-width:3}.maptext{font-size:9px;fill:#444;paint-order:stroke;stroke:#fafafa;stroke-width:3px}
-.station{text-align:center;font-size:42px;font-weight:950;margin:22px 0 10px}.small{text-align:center;color:#777;font-size:12px}.chars{display:flex;justify-content:center;gap:5px;flex-wrap:wrap;margin:14px 0}.ch{width:40px;height:48px;border-radius:8px;background:#eef0f2;display:grid;place-items:center;font-size:21px;font-weight:800}.ch.done{background:#222;color:#fff}.ch.now{outline:3px solid #222}
-.bar{height:7px;background:#eee;border-radius:8px;overflow:hidden}.bar i{display:block;height:100%;width:0;background:#222}.input{width:100%;padding:13px;border:1px solid #d9dce1;border-radius:11px;margin-top:13px;font-size:18px;outline:none}.modes{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.hint{font-size:12px;color:#777;margin-top:9px}.finish{display:none;text-align:center;padding:50px 10px}.finish b{font-size:50px}.warn{font-size:12px;color:#a33;background:#fff4f4;padding:8px;border-radius:8px;margin-top:10px}
-@media(max-width:850px){.layout{grid-template-columns:1fr}.map{height:430px}.stats{grid-template-columns:repeat(2,1fr)}.stats .stat:last-child{grid-column:span 2}}
-</style></head>
-<body><div class="app">
-<div class="top"><div><div class="logo">METRO TYPING: CHINA</div><div class="sub">SHANGHAI · FULL ROUTES</div></div></div>
-<div class="card"><div class="controls">
-<select id="line" class="select"></select>
-<button class="btn active" data-mode="zh">中文</button><button class="btn" data-mode="pinyin">拼音</button><button class="btn" data-mode="ko">한국어</button><button class="btn" data-mode="en">English</button>
-<button id="start" class="btn start">开始练习</button>
-</div><div id="warning" class="warn" style="display:none"></div></div>
-<div class="stats"><div class="stat"><div class="lab">현재 타수</div><div class="val" id="tpm">0</div></div><div class="stat"><div class="lab">평균 타수</div><div class="val" id="avg">0</div></div><div class="stat"><div class="lab">정확도</div><div class="val" id="acc">100%</div></div><div class="stat"><div class="lab">콤보</div><div class="val" id="combo">0</div></div><div class="stat"><div class="lab">진행</div><div class="val" id="prog">0 / 0</div></div></div>
-<div class="layout"><div class="card"><div class="map" id="map"></div></div>
-<div class="card"><div id="game"><div class="small" id="lineTitle"></div><div class="station" id="station">—</div><div class="chars" id="chars"></div><div class="bar"><i id="bar"></i></div><input id="input" class="input" disabled autocomplete="off" spellcheck="false"><div class="hint" id="hint">노선 전체를 순서대로 입력하세요.</div></div>
-<div class="finish" id="finish"><div>🎉 完成!</div><b id="final">0</b><div>평균 타수</div><p id="fininfo"></p><button class="btn start" onclick="startGame()">再来一次</button></div></div></div>
-</div>
-<script>
-let D,L,stations=[],idx=0,mode='zh',playing=false,startAt=0,typedCount=0,correctCount=0,combo=0,best=0,errors=0;
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-const $=id=>document.getElementById(id);
-fetch('metro-data-fixed.json').then(r=>r.json()).then(d=>{
- D=d; let sel=$('line');
- d.lines.forEach((l,i)=>{let o=document.createElement('option');o.value=i;o.textContent=l.displayName;sel.appendChild(o)});
- sel.onchange=()=>{L=d.lines[sel.value]; drawMap(); preview();};
- L=d.lines[0]; drawMap(); preview();
+<title>METRO TYPING CHINA</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #f3f4f6;
+    color: #111;
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Noto Sans KR",
+        "Noto Sans SC",
+        Arial,
+        sans-serif;
+}
+
+header {
+    padding: 20px;
+    background: white;
+    border-bottom: 1px solid #ddd;
+}
+
+.logo {
+    font-size: 26px;
+    font-weight: 900;
+}
+
+.subtitle {
+    color: #888;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 15px;
+}
+
+.panel {
+    background: white;
+    border-radius: 18px;
+    padding: 15px;
+    margin-bottom: 12px;
+    border: 1px solid #ddd;
+}
+
+.controls {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+button,
+select {
+    font: inherit;
+}
+
+button {
+    border: 1px solid #ddd;
+    background: white;
+    border-radius: 10px;
+    padding: 9px 13px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #f0f0f0;
+}
+
+button.active,
+button.start {
+    background: #111;
+    color: white;
+    border-color: #111;
+}
+
+select {
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 9px 12px;
+    background: white;
+}
+
+.file {
+    display: none;
+}
+
+.file-label {
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 9px 13px;
+    cursor: pointer;
+    background: white;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.stat {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 13px;
+    padding: 11px;
+}
+
+.stat-title {
+    color: #888;
+    font-size: 11px;
+}
+
+.stat-value {
+    font-size: 22px;
+    font-weight: 900;
+    margin-top: 3px;
+}
+
+.layout {
+    display: grid;
+    grid-template-columns: 1.3fr 0.7fr;
+    gap: 12px;
+}
+
+.map {
+    height: 600px;
+    background: #fafafa;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.map svg {
+    width: 100%;
+    height: 100%;
+}
+
+.route {
+    fill: none;
+    stroke-width: 6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.station-dot {
+    stroke: white;
+    stroke-width: 2;
+}
+
+.current-station {
+    stroke: black;
+    stroke-width: 4;
+}
+
+.station-label {
+    font-size: 10px;
+    fill: #333;
+
+    paint-order: stroke;
+    stroke: white;
+    stroke-width: 3px;
+}
+
+.game {
+    text-align: center;
+}
+
+.line-name {
+    color: #777;
+    font-size: 13px;
+}
+
+.station-name {
+    font-size: 43px;
+    font-weight: 950;
+    margin: 20px 0;
+}
+
+.progress {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 15px;
+}
+
+.char {
+    width: 42px;
+    height: 48px;
+
+    background: #eee;
+    border-radius: 8px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 21px;
+    font-weight: 800;
+}
+
+.char.done {
+    background: #111;
+    color: white;
+}
+
+.char.current {
+    outline: 3px solid #111;
+}
+
+.progress-bar {
+    height: 7px;
+    background: #eee;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-bar div {
+    height: 100%;
+    width: 0%;
+    background: #111;
+}
+
+input[type="text"] {
+    width: 100%;
+    margin-top: 15px;
+
+    padding: 14px;
+
+    font-size: 18px;
+
+    border: 1px solid #ddd;
+    border-radius: 11px;
+
+    outline: none;
+}
+
+input[type="text"]:focus {
+    border-color: #111;
+}
+
+.modes {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 9px;
+}
+
+.help {
+    color: #888;
+    font-size: 12px;
+    margin-top: 10px;
+}
+
+.finish {
+    display: none;
+    text-align: center;
+    padding: 50px 10px;
+}
+
+.finish-title {
+    font-size: 25px;
+    font-weight: 900;
+}
+
+.finish-score {
+    font-size: 55px;
+    font-weight: 950;
+}
+
+.warning {
+    margin-top: 10px;
+    padding: 10px;
+    background: #fff2f2;
+    color: #a00;
+    border-radius: 9px;
+    font-size: 12px;
+}
+
+@media(max-width:850px) {
+
+    .layout {
+        grid-template-columns: 1fr;
+    }
+
+    .map {
+        height: 430px;
+    }
+
+    .stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .stats .stat:last-child {
+        grid-column: span 2;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <div class="container">
+        <div class="logo">
+            METRO TYPING: CHINA
+        </div>
+
+        <div class="subtitle">
+            SHANGHAI METRO · TYPING PRACTICE
+        </div>
+    </div>
+</header>
+
+
+<div class="container">
+
+    <!-- 데이터 -->
+    <div class="panel">
+
+        <div class="controls">
+
+            <label class="file-label">
+                📂 JSON 불러오기
+                <input
+                    id="jsonFile"
+                    class="file"
+                    type="file"
+                    accept=".json,.txt"
+                >
+            </label>
+
+            <select id="lineSelect" disabled>
+                <option>먼저 JSON을 불러오세요</option>
+            </select>
+
+            <button
+                id="startButton"
+                class="start"
+                disabled
+            >
+                开始练习
+            </button>
+
+        </div>
+
+        <div id="warning"></div>
+
+    </div>
+
+
+    <!-- 통계 -->
+
+    <div class="stats">
+
+        <div class="stat">
+            <div class="stat-title">
+                현재 타수
+            </div>
+
+            <div
+                class="stat-value"
+                id="currentTPM"
+            >
+                0
+            </div>
+        </div>
+
+
+        <div class="stat">
+            <div class="stat-title">
+                평균 타수
+            </div>
+
+            <div
+                class="stat-value"
+                id="averageTPM"
+            >
+                0
+            </div>
+        </div>
+
+
+        <div class="stat">
+            <div class="stat-title">
+                정확도
+            </div>
+
+            <div
+                class="stat-value"
+                id="accuracy"
+            >
+                100%
+            </div>
+        </div>
+
+
+        <div class="stat">
+            <div class="stat-title">
+                콤보
+            </div>
+
+            <div
+                class="stat-value"
+                id="combo"
+            >
+                0
+            </div>
+        </div>
+
+
+        <div class="stat">
+            <div class="stat-title">
+                진행
+            </div>
+
+            <div
+                class="stat-value"
+                id="stationProgress"
+            >
+                0 / 0
+            </div>
+        </div>
+
+    </div>
+
+
+    <div class="layout">
+
+
+        <!-- 지도 -->
+
+        <div class="panel">
+
+            <div
+                id="map"
+                class="map"
+            >
+                <div
+                    style="
+                    padding:30px;
+                    text-align:center;
+                    color:#888;
+                    "
+                >
+                    JSON을 불러오면 상하이 지하철 노선도가 표시됩니다.
+                </div>
+            </div>
+
+        </div>
+
+
+        <!-- 게임 -->
+
+        <div class="panel">
+
+            <div id="game">
+
+                <div
+                    class="game"
+                >
+
+                    <div
+                        class="line-name"
+                        id="lineName"
+                    >
+                        노선을 선택하세요
+                    </div>
+
+
+                    <div
+                        class="station-name"
+                        id="stationName"
+                    >
+                        —
+                    </div>
+
+
+                    <div
+                        class="progress"
+                        id="characterProgress"
+                    >
+                    </div>
+
+
+                    <div class="progress-bar">
+
+                        <div
+                            id="progressBar"
+                        ></div>
+
+                    </div>
+
+
+                    <input
+                        id="typingInput"
+                        type="text"
+                        autocomplete="off"
+                        spellcheck="false"
+                        disabled
+                        placeholder="입력하세요"
+                    >
+
+
+                    <div class="modes">
+
+                        <button
+                            class="mode active"
+                            data-mode="zh"
+                        >
+                            中文
+                        </button>
+
+                        <button
+                            class="mode"
+                            data-mode="pinyin"
+                        >
+                            拼音
+                        </button>
+
+                        <button
+                            class="mode"
+                            data-mode="ko"
+                        >
+                            한국어
+                        </button>
+
+                        <button
+                            class="mode"
+                            data-mode="en"
+                        >
+                            English
+                        </button>
+
+                    </div>
+
+
+                    <div
+                        class="help"
+                        id="help"
+                    >
+                        시간 제한 없음 · 노선을 끝까지 타이핑하세요.
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="finish"
+                class="finish"
+            >
+
+                <div class="finish-title">
+                    🎉 노선 완주!
+                </div>
+
+                <div
+                    class="finish-score"
+                    id="finalScore"
+                >
+                    0
+                </div>
+
+                <div>
+                    평균 타수
+                </div>
+
+                <p id="finalInfo"></p>
+
+                <button
+                    class="start"
+                    onclick="startGame()"
+                >
+                    다시 하기
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/*
+=========================================================
+METRO TYPING CHINA
+=========================================================
+
+중요:
+
+네 JSON의 좌표는
+
+"c": [
+    "1674 115",
+    "1674 176"
+]
+
+형식이다.
+
+따라서 반드시
+
+"x y"
+
+문자열을 숫자 좌표로 변환한다.
+
+=========================================================
+*/
+
+
+let DATA = null;
+let CURRENT_LINE = null;
+
+let stations = [];
+let currentStationIndex = 0;
+
+let inputMode = "zh";
+
+let playing = false;
+
+let startTime = 0;
+
+let typedCharacters = 0;
+let correctCharacters = 0;
+
+let combo = 0;
+let bestCombo = 0;
+
+
+/* ======================================================
+   JSON 불러오기
+====================================================== */
+
+document
+.getElementById("jsonFile")
+.addEventListener("change", function(event) {
+
+    const file = event.target.files[0];
+
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+
+        try {
+
+            const raw = JSON.parse(e.target.result);
+
+            if (!raw.l || !Array.isArray(raw.l)) {
+
+                throw new Error(
+                    "이 파일에는 l 배열이 없습니다."
+                );
+
+            }
+
+            DATA = convertOriginalData(raw);
+
+            setupLines();
+
+            showWarning(
+                "JSON 불러오기 완료 · " +
+                DATA.lines.length +
+                "개 노선 · " +
+                DATA.totalStations +
+                "개 역",
+                false
+            );
+
+        }
+        catch(error) {
+
+            console.error(error);
+
+            showWarning(
+                "JSON을 읽지 못했습니다: " +
+                error.message,
+                true
+            );
+
+        }
+
+    };
+
+    reader.readAsText(file, "UTF-8");
+
 });
-function norm(s){return s.trim().toLowerCase().normalize('NFKC').replace(/[\\s·'’.\-]/g,'')}
-function stationName(s){
- if(mode==='ko' && s.ko) return s.ko;
- if(mode==='en' && s.en) return s.en;
- if(mode==='pinyin' && s.pinyin) return s.pinyin;
- return s.zh;
+
+
+/* ======================================================
+   원본 JSON 변환
+====================================================== */
+
+function convertOriginalData(raw) {
+
+    const result = {
+
+        lines: [],
+
+        totalStations: 0
+
+    };
+
+
+    raw.l.forEach(function(line, lineIndex) {
+
+
+        /*
+        -----------------------------------------------
+        노선 좌표
+
+        원본:
+
+        "1674 115"
+
+        ↓
+
+        [1674,115]
+
+        -----------------------------------------------
+        */
+
+        const coordinates = [];
+
+        if (Array.isArray(line.c)) {
+
+            line.c.forEach(function(point) {
+
+                if (typeof point === "string") {
+
+                    const parts =
+                        point
+                        .trim()
+                        .split(/\s+/);
+
+                    if (parts.length >= 2) {
+
+                        const x = Number(parts[0]);
+                        const y = Number(parts[1]);
+
+                        if (
+                            Number.isFinite(x) &&
+                            Number.isFinite(y)
+                        ) {
+
+                            coordinates.push([
+                                x,
+                                y
+                            ]);
+
+                        }
+
+                    }
+
+                }
+
+                else if (
+                    Array.isArray(point) &&
+                    point.length >= 2
+                ) {
+
+                    coordinates.push([
+                        Number(point[0]),
+                        Number(point[1])
+                    ]);
+
+                }
+
+            });
+
+        }
+
+
+        /*
+        -----------------------------------------------
+        노선 ID
+
+        같은 10호선 / 11호선이 있어도
+        절대 합쳐버리지 않는다.
+
+        각각 별도의 노선 데이터로 유지한다.
+        -----------------------------------------------
+        */
+
+        const number =
+            String(
+                line.x ??
+                lineIndex + 1
+            );
+
+
+        const originalName =
+            line.ln ||
+            line.kn ||
+            number + "号线";
+
+
+        const uniqueId =
+            number +
+            "_" +
+            lineIndex;
+
+
+        /*
+        -----------------------------------------------
+        역
+        -----------------------------------------------
+        */
+
+        const convertedStations = [];
+
+
+        if (Array.isArray(line.st)) {
+
+            line.st.forEach(function(station, stationIndex) {
+
+                if (!station.n) return;
+
+
+                /*
+                다국어
+                */
+
+                let english = "";
+
+                if (
+                    station.multilang &&
+                    station.multilang.n
+                ) {
+
+                    english =
+                        station.multilang.n.en ||
+                        "";
+
+                }
+
+
+                /*
+                한국어
+
+                현재 원본 JSON에는 한국어가 없음.
+
+                나중에
+
+                station.ko
+
+                값이 들어오면 자동 사용한다.
+                */
+
+                const korean =
+                    station.ko ||
+                    "";
+
+
+                /*
+                역 좌표
+                */
+
+                let stationCoord = [];
+
+                if (
+                    Array.isArray(station.sl) &&
+                    station.sl.length >= 2
+                ) {
+
+                    stationCoord = [
+                        Number(station.sl[0]),
+                        Number(station.sl[1])
+                    ];
+
+                }
+
+
+                convertedStations.push({
+
+                    id:
+                        String(
+                            station.sid ??
+                            uniqueId +
+                            "_" +
+                            stationIndex
+                        ),
+
+                    zh:
+                        station.n,
+
+                    pinyin:
+                        station.sp ||
+                        "",
+
+                    en:
+                        english,
+
+                    ko:
+                        korean,
+
+                    characters:
+                        [...station.n],
+
+                    transfer:
+                        Boolean(station.t),
+
+                    relatedLines:
+                        station.r ||
+                        [],
+
+                    coord:
+                        stationCoord
+
+                });
+
+            });
+
+        }
+
+
+        result.totalStations +=
+            convertedStations.length;
+
+
+        result.lines.push({
+
+            uid:
+                uniqueId,
+
+            number:
+                number,
+
+            name:
+                originalName,
+
+            /*
+            같은 이름이면 지선 번호 표시
+            */
+
+            displayName:
+                originalName +
+                " · " +
+                (lineIndex + 1),
+
+            color:
+                line.cl ||
+                "#555",
+
+            coordinates:
+                coordinates,
+
+            stations:
+                convertedStations
+
+        });
+
+    });
+
+
+    return result;
 }
-function preview(){$('lineTitle').textContent=L.name+' · '+L.stations.length+'개 역';$('prog').textContent='0 / '+L.stations.length}
-function render(){
- let s=stations[idx],tar=stationName(s);
- $('lineTitle').textContent=L.name+' · '+(idx+1)+' / '+stations.length+(s.transfer?' · 换乘':'');
- $('station').textContent=s.zh;$('prog').textContent=idx+' / '+stations.length;
- $('chars').innerHTML=[...tar].map((c,i)=>`<div class="ch" data-i="${i}">${c}</div>`).join('');
- $('input').value='';$('bar').style.width='0%';
- $('hint').textContent=mode==='ko' ? (s.ko?'한국어 역명으로 입력합니다.':'⚠ 이 역은 원본 데이터에 한국어 이름이 없어 한국어 모드를 사용할 수 없습니다.') : '노선 전체를 순서대로 입력하세요.';
- $('input').disabled=mode==='ko'&&!s.ko;drawMap();if(!$('input').disabled)$('input').focus();
+
+
+/* ======================================================
+   노선 선택창
+====================================================== */
+
+function setupLines() {
+
+    const select =
+        document.getElementById(
+            "lineSelect"
+        );
+
+
+    select.innerHTML = "";
+
+
+    DATA.lines.forEach(function(line, index) {
+
+        const option =
+            document.createElement("option");
+
+        option.value = index;
+
+        option.textContent =
+            line.name +
+            "  [" +
+            (index + 1) +
+            "]";
+
+
+        select.appendChild(option);
+
+    });
+
+
+    select.disabled = false;
+
+
+    document.getElementById(
+        "startButton"
+    ).disabled = false;
+
+
+    CURRENT_LINE =
+        DATA.lines[0];
+
+
+    select.onchange = function() {
+
+        CURRENT_LINE =
+            DATA.lines[
+                Number(select.value)
+            ];
+
+
+        drawMap();
+
+        showPreview();
+
+    };
+
+
+    showPreview();
+
+    drawMap();
+
 }
-function drawMap(){
- if(!L)return;
- let pts=L.coords||[];
- // IMPORTANT: use source route polyline first; never silently replace it with a missing/invalid array.
- if(!Array.isArray(pts)||pts.length<2){$('map').innerHTML='<div style="padding:25px;color:#a33">이 노선의 원본 노선 좌표가 없습니다.</div>';return}
- let xs=pts.map(p=>+p[0]),ys=pts.map(p=>+p[1]),W=900,H=580,pad=35;
- let minx=Math.min(...xs),maxx=Math.max(...xs),miny=Math.min(...ys),maxy=Math.max(...ys);
- const X=x=>pad+(x-minx)/Math.max(1e-9,maxx-minx)*(W-2*pad);
- const Y=y=>H-pad-(y-miny)/Math.max(1e-9,maxy-miny)*(H-2*pad);
- let color=L.color||'#555',poly=pts.map(p=>`${X(+p[0])},${Y(+p[1])}`).join(' ');
- let svg=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><polyline class="route" style="stroke:${color}" points="${poly}"/>`;
- L.stations.forEach((s,i)=>{if(!s.coord.length)return;let x=X(+s.coord[0]),y=Y(+s.coord[1]),active=playing&&i===idx;
- svg+=`<circle class="dot ${active?'current':''}" cx="${x}" cy="${y}" r="${active?8:5}" fill="${color}"/>`;
- if(active||i%Math.max(1,Math.ceil(L.stations.length/32))===0)svg+=`<text class="maptext" x="${x+7}" y="${y-7}">${s.zh}</text>`});
- svg+='</svg>';$('map').innerHTML=svg;
+
+
+/* ======================================================
+   미리보기
+====================================================== */
+
+function showPreview() {
+
+    if (!CURRENT_LINE) return;
+
+
+    document.getElementById(
+        "lineName"
+    ).textContent =
+        CURRENT_LINE.name +
+        " · " +
+        CURRENT_LINE.stations.length +
+        "개 역";
+
+
+    document.getElementById(
+        "stationName"
+    ).textContent =
+        "—";
+
+
+    document.getElementById(
+        "stationProgress"
+    ).textContent =
+        "0 / " +
+        CURRENT_LINE.stations.length;
+
 }
-function updateStats(){if(!playing)return;let mins=Math.max((performance.now()-startAt)/60000,1/60000);$('tpm').textContent=Math.round(typedCount/mins);$('avg').textContent=Math.round(correctCount/mins);$('acc').textContent=(typedCount?Math.round(correctCount/typedCount*100):100)+'%';$('combo').textContent=combo;requestAnimationFrame(updateStats)}
-$('input').addEventListener('input',()=>{
- if(!playing)return;let tar=norm(stationName(stations[idx])),v=norm($('input').value);typedCount++;
- let ok=v.length<=tar.length && tar.startsWith(v);
- if(ok){correctCount++;combo++;best=Math.max(best,combo)}else{combo=0;errors++}
- let n=0;while(n<v.length&&n<tar.length&&v[n]===tar[n])n++;
- [...$('chars').children].forEach((e,i)=>{e.classList.toggle('done',i<n);e.classList.toggle('now',i===n)});
- $('bar').style.width=(tar.length?Math.min(100,n/tar.length*100):0)+'%';
- if(v===tar&&tar.length){idx++;if(idx>=stations.length){finish();return}render()}
+
+
+/* ======================================================
+   문자열 정규화
+====================================================== */
+
+function normalizeText(text) {
+
+    return text
+        .trim()
+        .toLowerCase()
+        .normalize("NFKC")
+        .replace(
+            /[\s·'’.\-]/g,
+            ""
+        );
+
+}
+
+
+/* ======================================================
+   현재 역의 정답
+====================================================== */
+
+function getAnswer(station) {
+
+    /*
+    한국어 모드
+
+    한국어 이름이 없으면
+    절대로 중국어를 정답으로 사용하지 않는다.
+    */
+
+    if (inputMode === "ko") {
+
+        return station.ko || "";
+
+    }
+
+
+    if (inputMode === "en") {
+
+        return station.en ||
+               station.zh;
+
+    }
+
+
+    if (inputMode === "pinyin") {
+
+        return station.pinyin ||
+               "";
+
+    }
+
+
+    return station.zh;
+
+}
+
+
+/* ======================================================
+   게임 시작
+====================================================== */
+
+function startGame() {
+
+    if (!CURRENT_LINE) return;
+
+
+    stations =
+        CURRENT_LINE.stations.slice();
+
+
+    currentStationIndex = 0;
+
+    playing = true;
+
+    startTime =
+        performance.now();
+
+
+    typedCharacters = 0;
+
+    correctCharacters = 0;
+
+    combo = 0;
+
+    bestCombo = 0;
+
+
+    document.getElementById(
+        "finish"
+    ).style.display =
+        "none";
+
+
+    document.getElementById(
+        "game"
+    ).style.display =
+        "block";
+
+
+    renderStation();
+
+    updateStats();
+
+}
+
+
+/* ======================================================
+   역 표시
+====================================================== */
+
+function renderStation() {
+
+    if (!stations.length) return;
+
+
+    const station =
+        stations[
+            currentStationIndex
+        ];
+
+
+    const answer =
+        getAnswer(station);
+
+
+    document.getElementById(
+        "lineName"
+    ).textContent =
+        CURRENT_LINE.name +
+        " · " +
+        (currentStationIndex + 1) +
+        " / " +
+        stations.length +
+        (
+            station.transfer
+            ? " · 환승"
+            : ""
+        );
+
+
+    /*
+    화면에 표시되는 역명은
+    기본적으로 중국어.
+
+    한국어 모드일 경우
+    한국어 이름이 있으면 한국어 표시.
+    */
+
+    let displayName =
+        station.zh;
+
+
+    if (
+        inputMode === "ko" &&
+        station.ko
+    ) {
+
+        displayName =
+            station.ko;
+
+    }
+
+
+    if (
+        inputMode === "en" &&
+        station.en
+    ) {
+
+        displayName =
+            station.en;
+
+    }
+
+
+    if (
+        inputMode === "pinyin" &&
+        station.pinyin
+    ) {
+
+        displayName =
+            station.pinyin;
+
+    }
+
+
+    document.getElementById(
+        "stationName"
+    ).textContent =
+        displayName;
+
+
+    document.getElementById(
+        "stationProgress"
+    ).textContent =
+        currentStationIndex +
+        " / " +
+        stations.length;
+
+
+    /*
+    문자별 표시
+    */
+
+    const progress =
+        document.getElementById(
+            "characterProgress"
+        );
+
+
+    progress.innerHTML = "";
+
+
+    [...answer].forEach(function(character, index) {
+
+        const div =
+            document.createElement("div");
+
+
+        div.className =
+            "char";
+
+
+        div.textContent =
+            character;
+
+
+        div.dataset.index =
+            index;
+
+
+        progress.appendChild(div);
+
+    });
+
+
+    document.getElementById(
+        "progressBar"
+    ).style.width =
+        "0%";
+
+
+    const input =
+        document.getElementById(
+            "typingInput"
+        );
+
+
+    input.value = "";
+
+
+    /*
+    한국어 데이터가 없는 경우
+    */
+
+    if (
+        inputMode === "ko" &&
+        !station.ko
+    ) {
+
+        input.disabled = true;
+
+        input.placeholder =
+            "이 역의 한국어 이름 데이터가 없습니다.";
+
+        document.getElementById(
+            "help"
+        ).textContent =
+            "⚠ 원본 JSON에 한국어 역명이 없습니다.";
+
+    }
+
+    else {
+
+        input.disabled = false;
+
+        if (inputMode === "zh") {
+
+            input.placeholder =
+                "중국어 역명을 입력하세요";
+
+        }
+
+        else if (inputMode === "pinyin") {
+
+            input.placeholder =
+                "拼音을 입력하세요";
+
+        }
+
+        else if (inputMode === "ko") {
+
+            input.placeholder =
+                "한국어 역명을 입력하세요";
+
+        }
+
+        else {
+
+            input.placeholder =
+                "English station name";
+
+        }
+
+
+        document.getElementById(
+            "help"
+        ).textContent =
+            "시간 제한 없음 · 현재 역을 입력하면 다음 역으로 이동합니다.";
+
+
+        input.focus();
+
+    }
+
+
+    drawMap();
+
+}
+
+
+/* ======================================================
+   타이핑
+====================================================== */
+
+document
+.getElementById("typingInput")
+.addEventListener(
+    "input",
+    function() {
+
+
+        if (!playing) return;
+
+
+        const station =
+            stations[
+                currentStationIndex
+            ];
+
+
+        const answer =
+            normalizeText(
+                getAnswer(station)
+            );
+
+
+        const typed =
+            normalizeText(
+                this.value
+            );
+
+
+        if (!answer) return;
+
+
+        typedCharacters++;
+
+
+        /*
+        현재까지 정확하게 맞은 문자 수
+        */
+
+        let correct = 0;
+
+
+        while (
+            correct < typed.length &&
+            correct < answer.length &&
+            typed[correct] ===
+            answer[correct]
+        ) {
+
+            correct++;
+
+        }
+
+
+        correctCharacters +=
+            correct > 0 ? 1 : 0;
+
+
+        if (
+            typed.length <= answer.length &&
+            answer.startsWith(typed)
+        ) {
+
+            combo++;
+
+            if (combo > bestCombo) {
+
+                bestCombo =
+                    combo;
+
+            }
+
+        }
+
+        else {
+
+            combo = 0;
+
+        }
+
+
+        /*
+        문자 UI
+        */
+
+        const chars =
+            document.querySelectorAll(
+                ".char"
+            );
+
+
+        chars.forEach(function(el, index) {
+
+            el.classList.toggle(
+                "done",
+                index < correct
+            );
+
+
+            el.classList.toggle(
+                "current",
+                index === correct
+            );
+
+        });
+
+
+        document.getElementById(
+            "progressBar"
+        ).style.width =
+            (
+                correct /
+                answer.length *
+                100
+            ) +
+            "%";
+
+
+        /*
+        정답
+        */
+
+        if (
+            typed === answer
+        ) {
+
+            currentStationIndex++;
+
+
+            if (
+                currentStationIndex >=
+                stations.length
+            ) {
+
+                finishGame();
+
+                return;
+
+            }
+
+
+            renderStation();
+
+        }
+
+    }
+);
+
+
+/* ======================================================
+   통계
+====================================================== */
+
+function updateStats() {
+
+    if (!playing) return;
+
+
+    const minutes =
+        Math.max(
+            (
+                performance.now() -
+                startTime
+            ) / 60000,
+
+            0.00001
+        );
+
+
+    const tpm =
+        Math.round(
+            typedCharacters /
+            minutes
+        );
+
+
+    const avg =
+        Math.round(
+            correctCharacters /
+            minutes
+        );
+
+
+    const accuracy =
+        typedCharacters === 0
+        ? 100
+        : Math.round(
+            correctCharacters /
+            typedCharacters *
+            100
+        );
+
+
+    document.getElementById(
+        "currentTPM"
+    ).textContent =
+        tpm;
+
+
+    document.getElementById(
+        "averageTPM"
+    ).textContent =
+        avg;
+
+
+    document.getElementById(
+        "accuracy"
+    ).textContent =
+        accuracy +
+        "%";
+
+
+    document.getElementById(
+        "combo"
+    ).textContent =
+        combo;
+
+
+    if (playing) {
+
+        requestAnimationFrame(
+            updateStats
+        );
+
+    }
+
+}
+
+
+/* ======================================================
+   게임 종료
+====================================================== */
+
+function finishGame() {
+
+    playing = false;
+
+
+    const minutes =
+        Math.max(
+            (
+                performance.now() -
+                startTime
+            ) / 60000,
+
+            0.00001
+        );
+
+
+    const average =
+        Math.round(
+            correctCharacters /
+            minutes
+        );
+
+
+    const accuracy =
+        typedCharacters === 0
+        ? 100
+        : Math.round(
+            correctCharacters /
+            typedCharacters *
+            100
+        );
+
+
+    document.getElementById(
+        "finalScore"
+    ).textContent =
+        average +
+        " 타";
+
+
+    document.getElementById(
+        "finalInfo"
+    ).textContent =
+        "정확도 " +
+        accuracy +
+        "% · 최고 콤보 " +
+        bestCombo +
+        " · " +
+        stations.length +
+        "개 역 완주";
+
+
+    document.getElementById(
+        "game"
+    ).style.display =
+        "none";
+
+
+    document.getElementById(
+        "finish"
+    ).style.display =
+        "block";
+
+
+    drawMap();
+
+}
+
+
+/* ======================================================
+   노선도
+====================================================== */
+
+function drawMap() {
+
+    if (!CURRENT_LINE) return;
+
+
+    const points =
+        CURRENT_LINE.coordinates;
+
+
+    const map =
+        document.getElementById(
+            "map"
+        );
+
+
+    /*
+    좌표가 제대로 들어왔는지 확인
+    */
+
+    if (
+        !Array.isArray(points) ||
+        points.length < 2
+    ) {
+
+        map.innerHTML = `
+            <div style="
+                padding:30px;
+                color:#a00;
+                text-align:center;
+            ">
+                ⚠ 이 노선의 좌표 데이터를 읽지 못했습니다.
+            </div>
+        `;
+
+        return;
+
+    }
+
+
+    const W = 900;
+    const H = 580;
+    const PAD = 40;
+
+
+    const xs =
+        points.map(
+            p => p[0]
+        );
+
+
+    const ys =
+        points.map(
+            p => p[1]
+        );
+
+
+    const minX =
+        Math.min(...xs);
+
+
+    const maxX =
+        Math.max(...xs);
+
+
+    const minY =
+        Math.min(...ys);
+
+
+    const maxY =
+        Math.max(...ys);
+
+
+    function X(value) {
+
+        return PAD +
+            (
+                value - minX
+            ) /
+            Math.max(
+                1,
+                maxX - minX
+            ) *
+            (
+                W -
+                PAD * 2
+            );
+
+    }
+
+
+    function Y(value) {
+
+        return H -
+            PAD -
+            (
+                value - minY
+            ) /
+            Math.max(
+                1,
+                maxY - minY
+            ) *
+            (
+                H -
+                PAD * 2
+            );
+
+    }
+
+
+    const color =
+        CURRENT_LINE.color ||
+        "#555";
+
+
+    const polyline =
+        points
+        .map(function(p) {
+
+            return (
+                X(p[0]) +
+                "," +
+                Y(p[1])
+            );
+
+        })
+        .join(" ");
+
+
+    let svg = `
+
+        <svg
+            viewBox="0 0 ${W} ${H}"
+            preserveAspectRatio="none"
+        >
+
+            <polyline
+                class="route"
+                stroke="${color}"
+                points="${polyline}"
+            >
+
+            </polyline>
+
+    `;
+
+
+    /*
+    역 표시
+    */
+
+    CURRENT_LINE.stations.forEach(
+        function(station, index) {
+
+
+            if (
+                !Array.isArray(
+                    station.coord
+                ) ||
+                station.coord.length < 2
+            ) {
+
+                return;
+
+            }
+
+
+            const x =
+                X(
+                    station.coord[0]
+                );
+
+
+            const y =
+                Y(
+                    station.coord[1]
+                );
+
+
+            const current =
+                playing &&
+                index ===
+                currentStationIndex;
+
+
+            svg += `
+
+                <circle
+
+                    class="
+                        station-dot
+                        ${current ? "current-station" : ""}
+                    "
+
+                    cx="${x}"
+
+                    cy="${y}"
+
+                    r="${current ? 9 : 5}"
+
+                    fill="${color}"
+
+                >
+
+                </circle>
+
+            `;
+
+
+            /*
+            역 이름을 전부 표시하면
+            너무 복잡해지므로 일부만 표시.
+
+            현재 역은 무조건 표시.
+            */
+
+            const labelInterval =
+                Math.max(
+                    1,
+                    Math.ceil(
+                        CURRENT_LINE.stations.length /
+                        30
+                    )
+                );
+
+
+            if (
+                current ||
+                index %
+                labelInterval ===
+                0
+            ) {
+
+                svg += `
+
+                    <text
+
+                        class="station-label"
+
+                        x="${x + 8}"
+
+                        y="${y - 8}"
+
+                    >
+
+                        ${escapeHTML(
+                            station.zh
+                        )}
+
+                    </text>
+
+                `;
+
+            }
+
+        }
+    );
+
+
+    svg += "</svg>";
+
+
+    map.innerHTML =
+        svg;
+
+}
+
+
+/* ======================================================
+   HTML escape
+====================================================== */
+
+function escapeHTML(text) {
+
+    return String(text)
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+
+}
+
+
+/* ======================================================
+   입력 모드
+====================================================== */
+
+document
+.querySelectorAll(".mode")
+.forEach(function(button) {
+
+    button.addEventListener(
+        "click",
+        function() {
+
+
+            document
+            .querySelectorAll(".mode")
+            .forEach(
+                b =>
+                b.classList.remove(
+                    "active"
+                )
+            );
+
+
+            button.classList.add(
+                "active"
+            );
+
+
+            inputMode =
+                button.dataset.mode;
+
+
+            if (playing) {
+
+                renderStation();
+
+            }
+
+        }
+    );
+
 });
-document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-mode]').forEach(x=>x.classList.remove('active'));b.classList.add('active');mode=b.dataset.mode;if(playing)render()});
-function startGame(){L=D.lines[$('line').value];stations=L.stations.slice();idx=0;playing=true;startAt=performance.now();typedCount=correctCount=combo=best=errors=0;$('finish').style.display='none';$('game').style.display='block';render();updateStats()}
-function finish(){playing=false;$('input').disabled=true;let mins=Math.max((performance.now()-startAt)/60000,1/60000);$('final').textContent=Math.round(correctCount/mins)+' 타';$('fininfo').textContent=`정확도 ${typedCount?Math.round(correctCount/typedCount*100):100}% · 최고 콤보 ${best} · ${stations.length}개 역 완주`;$('game').style.display='none';$('finish').style.display='block';drawMap()}
-$('start').onclick=startGame;
-</script></body></html>
+
+
+/* ======================================================
+   시작 버튼
+====================================================== */
+
+document
+.getElementById("startButton")
+.addEventListener(
+    "click",
+    startGame
+);
+
+
+/* ======================================================
+   경고창
+====================================================== */
+
+function showWarning(
+    message,
+    error
+) {
+
+    const warning =
+        document.getElementById(
+            "warning"
+        );
+
+
+    warning.className =
+        "warning";
+
+
+    warning.style.display =
+        "block";
+
+
+    warning.style.color =
+        error
+        ? "#a00"
+        : "#555";
+
+
+    warning.style.background =
+        error
+        ? "#fff2f2"
+        : "#f2fff4";
+
+
+    warning.textContent =
+        message;
+
+}
+
+</script>
+
+</body>
+</html>
