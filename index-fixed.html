@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>METRO TYPING: CHINA — Shanghai</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f5f7;color:#17191c;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans KR","Noto Sans SC",Arial,sans-serif}
+.app{max-width:1200px;margin:auto;padding:18px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px}.logo{font-weight:950;font-size:24px}.sub{font-size:11px;color:#777;letter-spacing:1px}
+.card{background:#fff;border:1px solid #e2e4e8;border-radius:18px;padding:16px;margin-top:12px}.controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+select,button,input{font:inherit}.select{border:1px solid #d9dce1;border-radius:10px;padding:9px 11px;background:#fff}.btn{border:1px solid #ddd;background:#fff;border-radius:9px;padding:8px 11px;cursor:pointer}.btn.active,.start{background:#222;color:#fff;border-color:#222}
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:12px}.stat{background:#fff;border:1px solid #e2e4e8;border-radius:13px;padding:10px 12px}.lab{font-size:11px;color:#777}.val{font-size:21px;font-weight:900}
+.layout{display:grid;grid-template-columns:1.35fr .65fr;gap:12px}.map{height:610px;background:#fafafa;border-radius:12px;overflow:hidden;position:relative}.map svg{width:100%;height:100%}
+.route{fill:none;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}.dot{stroke:#fff;stroke-width:2}.current{stroke:#111;stroke-width:3}.maptext{font-size:9px;fill:#444;paint-order:stroke;stroke:#fafafa;stroke-width:3px}
+.station{text-align:center;font-size:42px;font-weight:950;margin:22px 0 10px}.small{text-align:center;color:#777;font-size:12px}.chars{display:flex;justify-content:center;gap:5px;flex-wrap:wrap;margin:14px 0}.ch{width:40px;height:48px;border-radius:8px;background:#eef0f2;display:grid;place-items:center;font-size:21px;font-weight:800}.ch.done{background:#222;color:#fff}.ch.now{outline:3px solid #222}
+.bar{height:7px;background:#eee;border-radius:8px;overflow:hidden}.bar i{display:block;height:100%;width:0;background:#222}.input{width:100%;padding:13px;border:1px solid #d9dce1;border-radius:11px;margin-top:13px;font-size:18px;outline:none}.modes{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.hint{font-size:12px;color:#777;margin-top:9px}.finish{display:none;text-align:center;padding:50px 10px}.finish b{font-size:50px}.warn{font-size:12px;color:#a33;background:#fff4f4;padding:8px;border-radius:8px;margin-top:10px}
+@media(max-width:850px){.layout{grid-template-columns:1fr}.map{height:430px}.stats{grid-template-columns:repeat(2,1fr)}.stats .stat:last-child{grid-column:span 2}}
+</style></head>
+<body><div class="app">
+<div class="top"><div><div class="logo">METRO TYPING: CHINA</div><div class="sub">SHANGHAI · FULL ROUTES</div></div></div>
+<div class="card"><div class="controls">
+<select id="line" class="select"></select>
+<button class="btn active" data-mode="zh">中文</button><button class="btn" data-mode="pinyin">拼音</button><button class="btn" data-mode="ko">한국어</button><button class="btn" data-mode="en">English</button>
+<button id="start" class="btn start">开始练习</button>
+</div><div id="warning" class="warn" style="display:none"></div></div>
+<div class="stats"><div class="stat"><div class="lab">현재 타수</div><div class="val" id="tpm">0</div></div><div class="stat"><div class="lab">평균 타수</div><div class="val" id="avg">0</div></div><div class="stat"><div class="lab">정확도</div><div class="val" id="acc">100%</div></div><div class="stat"><div class="lab">콤보</div><div class="val" id="combo">0</div></div><div class="stat"><div class="lab">진행</div><div class="val" id="prog">0 / 0</div></div></div>
+<div class="layout"><div class="card"><div class="map" id="map"></div></div>
+<div class="card"><div id="game"><div class="small" id="lineTitle"></div><div class="station" id="station">—</div><div class="chars" id="chars"></div><div class="bar"><i id="bar"></i></div><input id="input" class="input" disabled autocomplete="off" spellcheck="false"><div class="hint" id="hint">노선 전체를 순서대로 입력하세요.</div></div>
+<div class="finish" id="finish"><div>🎉 完成!</div><b id="final">0</b><div>평균 타수</div><p id="fininfo"></p><button class="btn start" onclick="startGame()">再来一次</button></div></div></div>
+</div>
+<script>
+let D,L,stations=[],idx=0,mode='zh',playing=false,startAt=0,typedCount=0,correctCount=0,combo=0,best=0,errors=0;
+
+const $=id=>document.getElementById(id);
+fetch('metro-data-fixed.json').then(r=>r.json()).then(d=>{
+ D=d; let sel=$('line');
+ d.lines.forEach((l,i)=>{let o=document.createElement('option');o.value=i;o.textContent=l.displayName;sel.appendChild(o)});
+ sel.onchange=()=>{L=d.lines[sel.value]; drawMap(); preview();};
+ L=d.lines[0]; drawMap(); preview();
+});
+function norm(s){return s.trim().toLowerCase().normalize('NFKC').replace(/[\\s·'’.\-]/g,'')}
+function stationName(s){
+ if(mode==='ko' && s.ko) return s.ko;
+ if(mode==='en' && s.en) return s.en;
+ if(mode==='pinyin' && s.pinyin) return s.pinyin;
+ return s.zh;
+}
+function preview(){$('lineTitle').textContent=L.name+' · '+L.stations.length+'개 역';$('prog').textContent='0 / '+L.stations.length}
+function render(){
+ let s=stations[idx],tar=stationName(s);
+ $('lineTitle').textContent=L.name+' · '+(idx+1)+' / '+stations.length+(s.transfer?' · 换乘':'');
+ $('station').textContent=s.zh;$('prog').textContent=idx+' / '+stations.length;
+ $('chars').innerHTML=[...tar].map((c,i)=>`<div class="ch" data-i="${i}">${c}</div>`).join('');
+ $('input').value='';$('bar').style.width='0%';
+ $('hint').textContent=mode==='ko' ? (s.ko?'한국어 역명으로 입력합니다.':'⚠ 이 역은 원본 데이터에 한국어 이름이 없어 한국어 모드를 사용할 수 없습니다.') : '노선 전체를 순서대로 입력하세요.';
+ $('input').disabled=mode==='ko'&&!s.ko;drawMap();if(!$('input').disabled)$('input').focus();
+}
+function drawMap(){
+ if(!L)return;
+ let pts=L.coords||[];
+ // IMPORTANT: use source route polyline first; never silently replace it with a missing/invalid array.
+ if(!Array.isArray(pts)||pts.length<2){$('map').innerHTML='<div style="padding:25px;color:#a33">이 노선의 원본 노선 좌표가 없습니다.</div>';return}
+ let xs=pts.map(p=>+p[0]),ys=pts.map(p=>+p[1]),W=900,H=580,pad=35;
+ let minx=Math.min(...xs),maxx=Math.max(...xs),miny=Math.min(...ys),maxy=Math.max(...ys);
+ const X=x=>pad+(x-minx)/Math.max(1e-9,maxx-minx)*(W-2*pad);
+ const Y=y=>H-pad-(y-miny)/Math.max(1e-9,maxy-miny)*(H-2*pad);
+ let color=L.color||'#555',poly=pts.map(p=>`${X(+p[0])},${Y(+p[1])}`).join(' ');
+ let svg=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><polyline class="route" style="stroke:${color}" points="${poly}"/>`;
+ L.stations.forEach((s,i)=>{if(!s.coord.length)return;let x=X(+s.coord[0]),y=Y(+s.coord[1]),active=playing&&i===idx;
+ svg+=`<circle class="dot ${active?'current':''}" cx="${x}" cy="${y}" r="${active?8:5}" fill="${color}"/>`;
+ if(active||i%Math.max(1,Math.ceil(L.stations.length/32))===0)svg+=`<text class="maptext" x="${x+7}" y="${y-7}">${s.zh}</text>`});
+ svg+='</svg>';$('map').innerHTML=svg;
+}
+function updateStats(){if(!playing)return;let mins=Math.max((performance.now()-startAt)/60000,1/60000);$('tpm').textContent=Math.round(typedCount/mins);$('avg').textContent=Math.round(correctCount/mins);$('acc').textContent=(typedCount?Math.round(correctCount/typedCount*100):100)+'%';$('combo').textContent=combo;requestAnimationFrame(updateStats)}
+$('input').addEventListener('input',()=>{
+ if(!playing)return;let tar=norm(stationName(stations[idx])),v=norm($('input').value);typedCount++;
+ let ok=v.length<=tar.length && tar.startsWith(v);
+ if(ok){correctCount++;combo++;best=Math.max(best,combo)}else{combo=0;errors++}
+ let n=0;while(n<v.length&&n<tar.length&&v[n]===tar[n])n++;
+ [...$('chars').children].forEach((e,i)=>{e.classList.toggle('done',i<n);e.classList.toggle('now',i===n)});
+ $('bar').style.width=(tar.length?Math.min(100,n/tar.length*100):0)+'%';
+ if(v===tar&&tar.length){idx++;if(idx>=stations.length){finish();return}render()}
+});
+document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-mode]').forEach(x=>x.classList.remove('active'));b.classList.add('active');mode=b.dataset.mode;if(playing)render()});
+function startGame(){L=D.lines[$('line').value];stations=L.stations.slice();idx=0;playing=true;startAt=performance.now();typedCount=correctCount=combo=best=errors=0;$('finish').style.display='none';$('game').style.display='block';render();updateStats()}
+function finish(){playing=false;$('input').disabled=true;let mins=Math.max((performance.now()-startAt)/60000,1/60000);$('final').textContent=Math.round(correctCount/mins)+' 타';$('fininfo').textContent=`정확도 ${typedCount?Math.round(correctCount/typedCount*100):100}% · 최고 콤보 ${best} · ${stations.length}개 역 완주`;$('game').style.display='none';$('finish').style.display='block';drawMap()}
+$('start').onclick=startGame;
+</script></body></html>
